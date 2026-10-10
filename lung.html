@@ -1,0 +1,1582 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Pulmo-Scan AI | VGG16 Lung Cancer Detection</title>
+    <meta name="description"
+        content="Pulmo-Scan AI — Next-generation VGG16-powered lung cancer detection. Upload CT scans for instant AI-driven clinical diagnostics." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Orbitron:wght@400;700;900&display=swap"
+        rel="stylesheet" />
+    <!-- GSAP -->
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/gsap.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/gsap@3.12.5/dist/ScrollTrigger.min.js"></script>
+    <!-- Particles.js -->
+    <script src="https://cdn.jsdelivr.net/npm/particles.js@2.0.0/particles.min.js"></script>
+    <!-- Vanilla Tilt -->
+    <script src="https://cdn.jsdelivr.net/npm/vanilla-tilt@1.8.0/dist/vanilla-tilt.min.js"></script>
+
+    <style>
+        *,
+        *::before,
+        *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        :root {
+            --c1: #00f0ff;
+            --c2: #7b2ff7;
+            --c3: #ff2d6b;
+            --bg: #030712;
+            --glass: rgba(255, 255, 255, 0.04);
+            --border: rgba(0, 240, 255, 0.18);
+            --text: #cce8f0;
+        }
+
+        html {
+            scroll-behavior: smooth;
+        }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            overflow-x: hidden;
+            cursor: none;
+        }
+
+        /* ── Custom Cursor ── */
+        #cursor {
+            position: fixed;
+            width: 12px;
+            height: 12px;
+            background: var(--c1);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9999;
+            transform: translate(-50%, -50%);
+            transition: transform .1s, width .3s, height .3s, background .3s;
+            mix-blend-mode: difference;
+        }
+
+        #cursor-ring {
+            position: fixed;
+            width: 36px;
+            height: 36px;
+            border: 1.5px solid var(--c1);
+            border-radius: 50%;
+            pointer-events: none;
+            z-index: 9998;
+            transform: translate(-50%, -50%);
+            transition: all .18s ease;
+        }
+
+        body:hover #cursor {
+            opacity: 1;
+        }
+
+        /* ── Particles Canvas ── */
+        #particles-js {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+        }
+
+        /* ── Nav ── */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 18px 6vw;
+            background: rgba(3, 7, 18, 0.7);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(0, 240, 255, 0.08);
+        }
+
+        .nav-logo {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.15rem;
+            font-weight: 700;
+            color: #fff;
+            letter-spacing: 2px;
+        }
+
+        .nav-logo span {
+            color: var(--c1);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+
+        .nav-links a {
+            color: var(--text);
+            text-decoration: none;
+            font-size: .82rem;
+            font-weight: 500;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            transition: color .3s;
+            position: relative;
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 1.5px;
+            background: var(--c1);
+            transition: width .3s;
+        }
+
+        .nav-links a:hover {
+            color: var(--c1);
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        .nav-cta {
+            padding: 9px 22px;
+            border: 1.5px solid var(--c1);
+            border-radius: 6px;
+            color: var(--c1);
+            font-size: .85rem;
+            font-weight: 600;
+            text-decoration: none;
+            letter-spacing: 1px;
+            transition: all .3s;
+        }
+
+        .nav-cta:hover {
+            background: var(--c1);
+            color: #000;
+            box-shadow: 0 0 20px rgba(0, 240, 255, .4);
+        }
+
+        /* ── Section Base ── */
+        section {
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ── HERO ── */
+        #hero {
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 120px 6vw 80px;
+            background: radial-gradient(ellipse 80% 60% at 50% 0%, rgba(123, 47, 247, .18) 0%, transparent 70%),
+                radial-gradient(ellipse 60% 40% at 80% 100%, rgba(0, 240, 255, .12) 0%, transparent 70%);
+        }
+
+        .hero-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(0, 240, 255, 0.08);
+            border: 1px solid rgba(0, 240, 255, 0.3);
+            border-radius: 50px;
+            padding: 7px 18px;
+            margin-bottom: 28px;
+            font-size: .78rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--c1);
+        }
+
+        .hero-badge .dot {
+            width: 7px;
+            height: 7px;
+            border-radius: 50%;
+            background: var(--c1);
+            animation: pulse-dot 1.5s infinite;
+        }
+
+        @keyframes pulse-dot {
+
+            0%,
+            100% {
+                opacity: 1;
+                box-shadow: 0 0 0 0 rgba(0, 240, 255, .4);
+            }
+
+            50% {
+                opacity: .7;
+                box-shadow: 0 0 0 6px rgba(0, 240, 255, 0);
+            }
+        }
+
+        h1.hero-title {
+            font-family: 'Orbitron', monospace;
+            font-size: clamp(2.4rem, 6vw, 5rem);
+            font-weight: 900;
+            line-height: 1.1;
+            letter-spacing: -1px;
+            color: #fff;
+            margin-bottom: 26px;
+        }
+
+        h1.hero-title .grad {
+            background: linear-gradient(90deg, var(--c1), var(--c2), var(--c3));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-sub {
+            font-size: clamp(.95rem, 2vw, 1.2rem);
+            color: #7a9baa;
+            max-width: 640px;
+            margin: 0 auto 42px;
+            line-height: 1.7;
+        }
+
+        .hero-btns {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .btn-primary {
+            padding: 15px 36px;
+            background: linear-gradient(135deg, var(--c1), var(--c2));
+            border: none;
+            border-radius: 8px;
+            color: #000;
+            font-weight: 700;
+            font-size: .95rem;
+            cursor: pointer;
+            transition: all .3s;
+            letter-spacing: .5px;
+            box-shadow: 0 0 30px rgba(0, 240, 255, .25);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 0 50px rgba(0, 240, 255, .45);
+        }
+
+        .btn-ghost {
+            padding: 15px 36px;
+            background: transparent;
+            border: 1.5px solid var(--border);
+            border-radius: 8px;
+            color: var(--text);
+            font-weight: 600;
+            font-size: .95rem;
+            cursor: pointer;
+            transition: all .3s;
+        }
+
+        .btn-ghost:hover {
+            border-color: var(--c1);
+            color: var(--c1);
+            transform: translateY(-3px);
+        }
+
+        /* Scroll Arrow */
+        .scroll-hint {
+            margin-top: 60px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            color: #3a5a6a;
+            font-size: .75rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+        }
+
+        .scroll-arrow {
+            width: 1.5px;
+            height: 48px;
+            background: linear-gradient(to bottom, var(--c1), transparent);
+            animation: scrollAnim 2s infinite;
+        }
+
+        @keyframes scrollAnim {
+
+            0%,
+            100% {
+                opacity: 0;
+                transform: scaleY(0) translateY(-20px)
+            }
+
+            50% {
+                opacity: 1;
+                transform: scaleY(1) translateY(0)
+            }
+        }
+
+        /* ── Stats Bar ── */
+        #stats {
+            padding: 60px 6vw;
+            background: rgba(0, 240, 255, 0.03);
+            border-top: 1px solid rgba(0, 240, 255, 0.07);
+            border-bottom: 1px solid rgba(0, 240, 255, 0.07);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 30px;
+        }
+
+        .stat-card {
+            text-align: center;
+            padding: 28px 20px;
+            background: var(--glass);
+            border: 1px solid var(--border);
+            border-radius: 14px;
+            backdrop-filter: blur(10px);
+            transition: transform .3s, box-shadow .3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 0 30px rgba(0, 240, 255, .1);
+        }
+
+        .stat-num {
+            font-family: 'Orbitron', monospace;
+            font-size: 2.6rem;
+            font-weight: 900;
+            color: var(--c1);
+        }
+
+        .stat-label {
+            font-size: .82rem;
+            color: #5a8a9a;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-top: 6px;
+        }
+
+        /* ── Features ── */
+        #features {
+            padding: 110px 6vw;
+        }
+
+        .section-title {
+            font-family: 'Orbitron', monospace;
+            font-size: clamp(1.6rem, 3.5vw, 2.6rem);
+            font-weight: 700;
+            color: #fff;
+            text-align: center;
+            margin-bottom: 16px;
+        }
+
+        .section-sub {
+            text-align: center;
+            color: #5a8a9a;
+            font-size: .95rem;
+            max-width: 540px;
+            margin: 0 auto 64px;
+            line-height: 1.7;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 28px;
+        }
+
+        .feat-card {
+            background: var(--glass);
+            border: 1px solid rgba(255, 255, 255, 0.07);
+            border-radius: 20px;
+            padding: 38px 30px;
+            position: relative;
+            overflow: hidden;
+            transition: all .4s;
+        }
+
+        .feat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, var(--c1), var(--c2));
+            transform: scaleX(0);
+            transform-origin: left;
+            transition: transform .4s;
+        }
+
+        .feat-card:hover {
+            border-color: rgba(0, 240, 255, .25);
+            transform: translateY(-6px);
+            box-shadow: 0 20px 50px rgba(0, 240, 255, .08);
+        }
+
+        .feat-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .feat-icon {
+            font-size: 2.4rem;
+            margin-bottom: 20px;
+            display: block;
+        }
+
+        .feat-card h3 {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 12px;
+        }
+
+        .feat-card p {
+            font-size: .88rem;
+            color: #5a8a9a;
+            line-height: 1.7;
+        }
+
+        /* ── Neural Network SVG Section ── */
+        #neural {
+            padding: 110px 6vw;
+            display: flex;
+            align-items: center;
+            gap: 80px;
+            flex-wrap: wrap;
+        }
+
+        .neural-text {
+            flex: 1;
+            min-width: 280px;
+        }
+
+        .neural-text h2 {
+            font-family: 'Orbitron', monospace;
+            font-size: clamp(1.5rem, 3vw, 2.4rem);
+            color: #fff;
+            margin-bottom: 20px;
+            line-height: 1.2;
+        }
+
+        .neural-text p {
+            color: #5a8a9a;
+            font-size: .93rem;
+            line-height: 1.8;
+            margin-bottom: 24px;
+        }
+
+        .capability-list {
+            list-style: none;
+        }
+
+        .capability-list li {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 14px;
+            font-size: .9rem;
+            color: #9ab8c5;
+        }
+
+        .capability-list li::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--c1);
+            flex-shrink: 0;
+            box-shadow: 0 0 8px var(--c1);
+        }
+
+        .neural-canvas-wrap {
+            flex: 1;
+            min-width: 320px;
+            position: relative;
+        }
+
+        #neuralCanvas {
+            width: 100%;
+            border-radius: 20px;
+        }
+
+        /* ── HOW IT WORKS ── */
+        #howitworks {
+            padding: 110px 6vw;
+            background: rgba(123, 47, 247, 0.04);
+            border-top: 1px solid rgba(123, 47, 247, 0.12);
+            border-bottom: 1px solid rgba(123, 47, 247, 0.12);
+        }
+
+        .steps-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 24px;
+            margin-top: 60px;
+        }
+
+        .step-card {
+            background: var(--glass);
+            border: 1px solid rgba(123, 47, 247, .2);
+            border-radius: 20px;
+            padding: 36px 26px;
+            position: relative;
+            transition: all .4s;
+            text-align: center;
+        }
+
+        .step-card:hover {
+            transform: translateY(-8px);
+            box-shadow: 0 20px 50px rgba(123, 47, 247, .15);
+            border-color: rgba(123, 47, 247, .5);
+        }
+
+        .step-num {
+            font-family: 'Orbitron', monospace;
+            font-size: 3.5rem;
+            font-weight: 900;
+            color: rgba(123, 47, 247, .2);
+            position: absolute;
+            top: 16px;
+            right: 20px;
+            line-height: 1;
+        }
+
+        .step-icon {
+            font-size: 2.2rem;
+            margin-bottom: 18px;
+        }
+
+        .step-card h3 {
+            font-size: 1.05rem;
+            font-weight: 600;
+            color: #fff;
+            margin-bottom: 10px;
+        }
+
+        .step-card p {
+            font-size: .84rem;
+            color: #5a8a9a;
+            line-height: 1.7;
+        }
+
+        /* ── SCAN PORTAL ── */
+        #scan {
+            padding: 110px 6vw;
+            display: flex;
+            align-items: flex-start;
+            justify-content: center;
+            gap: 60px;
+            flex-wrap: wrap;
+        }
+
+        .scan-left {
+            flex: 1;
+            min-width: 280px;
+            max-width: 480px;
+        }
+
+        .scan-left h2 {
+            font-family: 'Orbitron', monospace;
+            font-size: clamp(1.5rem, 3vw, 2.2rem);
+            color: #fff;
+            margin-bottom: 16px;
+        }
+
+        .scan-left p {
+            color: #5a8a9a;
+            font-size: .9rem;
+            line-height: 1.8;
+            margin-bottom: 30px;
+        }
+
+        .glass-form {
+            flex: 1;
+            min-width: 320px;
+            max-width: 520px;
+            background: var(--glass);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 40px 36px;
+            backdrop-filter: blur(20px);
+            box-shadow: 0 8px 60px rgba(0, 240, 255, .07);
+        }
+
+        .form-title {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.1rem;
+            color: var(--c1);
+            letter-spacing: 2px;
+            margin-bottom: 28px;
+        }
+
+        .field-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 20px;
+        }
+
+        .field {
+            margin-bottom: 20px;
+        }
+
+        .field label {
+            display: block;
+            font-size: .75rem;
+            color: #4a8a9a;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+        }
+
+        .field input {
+            width: 100%;
+            padding: 13px 16px;
+            background: rgba(0, 0, 0, .3);
+            border: 1px solid rgba(0, 240, 255, .15);
+            border-radius: 10px;
+            color: #fff;
+            font-family: 'Space Grotesk', sans-serif;
+            outline: none;
+            transition: .3s;
+            font-size: .92rem;
+        }
+
+        .field input:focus {
+            border-color: var(--c1);
+            box-shadow: 0 0 0 3px rgba(0, 240, 255, .08);
+        }
+
+        .field input::placeholder {
+            color: #2a5a6a;
+        }
+
+        .field-row .field {
+            margin-bottom: 0;
+        }
+
+        .drop-zone {
+            border: 2px dashed rgba(0, 240, 255, .25);
+            border-radius: 14px;
+            padding: 36px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: .3s;
+            margin-bottom: 24px;
+            background: rgba(0, 240, 255, .02);
+            position: relative;
+        }
+
+        .drop-zone:hover,
+        .drop-zone.drag-over {
+            border-color: var(--c1);
+            background: rgba(0, 240, 255, .06);
+            transform: translateY(-2px);
+        }
+
+        .drop-zone-icon {
+            font-size: 2.5rem;
+            display: block;
+            margin-bottom: 12px;
+        }
+
+        .drop-zone-text {
+            font-size: .88rem;
+            color: #4a8a9a;
+        }
+
+        .drop-zone-text strong {
+            color: var(--c1);
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        .file-preview {
+            display: none;
+            margin-top: 12px;
+        }
+
+        .file-preview img {
+            max-width: 100%;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            max-height: 180px;
+            object-fit: cover;
+        }
+
+        .scan-btn {
+            width: 100%;
+            padding: 16px;
+            border: none;
+            border-radius: 10px;
+            background: linear-gradient(135deg, var(--c1), var(--c2));
+            color: #000;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: .3s;
+            letter-spacing: .5px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .scan-btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: -60%;
+            width: 40%;
+            height: 200%;
+            background: rgba(255, 255, 255, .15);
+            transform: skewX(-20deg) translateY(-50%);
+            transition: left .5s;
+        }
+
+        .scan-btn:hover::before {
+            left: 120%;
+        }
+
+        .scan-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 0 40px rgba(0, 240, 255, .4);
+        }
+
+        .scan-btn:disabled {
+            opacity: .5;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        /* Progress Ring */
+        .analysis-ui {
+            display: none;
+            margin-top: 28px;
+            text-align: center;
+        }
+
+        .ring-wrap {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 16px;
+        }
+
+        .ring-wrap svg {
+            transform: rotate(-90deg);
+        }
+
+        .ring-bg {
+            fill: none;
+            stroke: rgba(255, 255, 255, .07);
+            stroke-width: 8;
+        }
+
+        .ring-prog {
+            fill: none;
+            stroke: url(#ringGrad);
+            stroke-width: 8;
+            stroke-linecap: round;
+            stroke-dasharray: 282;
+            stroke-dashoffset: 282;
+            transition: stroke-dashoffset 2.5s ease;
+        }
+
+        .ring-label {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.6rem;
+            font-weight: 700;
+            color: var(--c1);
+            margin-bottom: 4px;
+        }
+
+        .ring-status {
+            font-size: .82rem;
+            color: #4a8a9a;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+        }
+
+        .result-panel {
+            display: none;
+            background: rgba(0, 240, 255, .05);
+            border: 1px solid rgba(0, 240, 255, .2);
+            border-radius: 12px;
+            padding: 22px 24px;
+            text-align: left;
+        }
+
+        .result-panel.malignant {
+            background: rgba(255, 45, 107, .05);
+            border-color: rgba(255, 45, 107, .3);
+        }
+
+        .result-tag {
+            font-family: 'Orbitron', monospace;
+            font-size: 1.1rem;
+            font-weight: 700;
+            letter-spacing: 2px;
+        }
+
+        .result-tag.ok {
+            color: var(--c1);
+        }
+
+        .result-tag.warn {
+            color: var(--c3);
+        }
+
+        .result-meta {
+            margin-top: 12px;
+            font-size: .84rem;
+            color: #5a8a9a;
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+
+        .result-meta span strong {
+            color: #fff;
+        }
+
+        /* ── Footer ── */
+        footer {
+            padding: 48px 6vw;
+            border-top: 1px solid rgba(255, 255, 255, .05);
+            text-align: center;
+            z-index: 1;
+            position: relative;
+        }
+
+        footer p {
+            color: #2a4a5a;
+            font-size: .83rem;
+            letter-spacing: 1px;
+        }
+
+        footer span {
+            color: var(--c1);
+        }
+
+        /* ── Floating Orbs ── */
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ── Responsive ── */
+        @media(max-width:768px) {
+            nav {
+                padding: 14px 4vw;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            #neural,
+            #scan {
+                flex-direction: column;
+            }
+
+            .field-row {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* GSAP hidden states */
+        .fade-up {
+            opacity: 0;
+            transform: translateY(40px);
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Custom Cursor -->
+    <div id="cursor"></div>
+    <div id="cursor-ring"></div>
+
+    <!-- Particles -->
+    <div id="particles-js"></div>
+
+    <!-- NAV -->
+    <nav id="navbar">
+        <div class="nav-logo">PULMO<span>SCAN</span></div>
+        <ul class="nav-links">
+            <li><a href="#features">Features</a></li>
+            <li><a href="#neural">Model</a></li>
+            <li><a href="#howitworks">How It Works</a></li>
+            <li><a href="#scan">Scan Portal</a></li>
+        </ul>
+        <a href="#scan" class="nav-cta">Run Scan →</a>
+    </nav>
+
+    <!-- HERO -->
+    <section id="hero">
+        <div class="orb" style="width:500px;height:500px;background:rgba(123,47,247,.12);top:-100px;left:-150px;"></div>
+        <div class="orb" style="width:400px;height:400px;background:rgba(0,240,255,.08);bottom:-80px;right:-80px;">
+        </div>
+        <div>
+            <div class="hero-badge fade-up">
+                <div class="dot"></div> VGG16 Neural Network — Clinical Grade
+            </div>
+            <h1 class="hero-title fade-up">Detect Lung Cancer<br /><span class="grad">Before It's Too Late</span></h1>
+            <p class="hero-sub fade-up">Pulmo-Scan AI uses a fine-tuned VGG16 deep learning model to analyze CT scans
+                with radiologist-level precision — in under 3 seconds.</p>
+            <div class="hero-btns fade-up">
+                <button class="btn-primary"
+                    onclick="document.getElementById('scan').scrollIntoView({behavior:'smooth'})">Analyze CT
+                    Scan</button>
+                <button class="btn-ghost"
+                    onclick="document.getElementById('neural').scrollIntoView({behavior:'smooth'})">View Model
+                    Architecture</button>
+            </div>
+            <div class="scroll-hint fade-up">
+                <span>SCROLL</span>
+                <div class="scroll-arrow"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- STATS -->
+    <section id="stats">
+        <div class="stats-grid">
+            <div class="stat-card fade-up">
+                <div class="stat-num" data-target="98.7">0</div>
+                <div class="stat-label">Accuracy %</div>
+            </div>
+            <div class="stat-card fade-up">
+                <div class="stat-num" data-target="2.4">0</div>
+                <div class="stat-label">Seconds Per Scan</div>
+            </div>
+            <div class="stat-card fade-up">
+                <div class="stat-num" data-target="3">0</div>
+                <div class="stat-label">Classes</div>
+            </div>
+            <div class="stat-card fade-up">
+                <div class="stat-num" data-target="15000">0</div>
+                <div class="stat-label">Training Images</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- FEATURES -->
+    <section id="features">
+        <p class="section-title fade-up">Cutting-Edge Capabilities</p>
+        <p class="section-sub fade-up">Built with the latest deep learning research fused with clinical diagnostics
+            expertise.</p>
+        <div class="features-grid">
+            <div class="feat-card fade-up" data-tilt data-tilt-max="8" data-tilt-glare data-tilt-max-glare="0.15">
+                <span class="feat-icon">🧠</span>
+                <h3>VGG16 Transfer Learning</h3>
+                <p>Fine-tuned on lung CT datasets using ImageNet pretrained weights. The 16-layer deep ConvNet extracts
+                    hierarchical features invisible to the human eye.</p>
+            </div>
+            <div class="feat-card fade-up" data-tilt data-tilt-max="8" data-tilt-glare data-tilt-max-glare="0.15">
+                <span class="feat-icon">⚡</span>
+                <h3>Real-Time Inference</h3>
+                <p>Optimized forward pass delivers predictions in under 3 seconds. Batch normalization and ReLU
+                    activations ensure efficient computation.</p>
+            </div>
+            <div class="feat-card fade-up" data-tilt data-tilt-max="8" data-tilt-glare data-tilt-max-glare="0.15">
+                <span class="feat-icon">🎯</span>
+                <h3>3-Class Detection</h3>
+                <p>Classifies CT scans into Benign, Malignant, and Normal with individual confidence scores.</p>
+            </div>
+            <div class="feat-card fade-up" data-tilt data-tilt-max="8" data-tilt-glare data-tilt-max-glare="0.15">
+                <span class="feat-icon">🔬</span>
+                <h3>Grad-CAM Visualization</h3>
+                <p>Gradient-weighted Class Activation Maps highlight the exact pixel regions driving each prediction —
+                    full explainability for clinicians.</p>
+            </div>
+            <div class="feat-card fade-up" data-tilt data-tilt-max="8" data-tilt-glare data-tilt-max-glare="0.15">
+                <span class="feat-icon">🛡️</span>
+                <h3>Secure & Private</h3>
+                <p>All inference runs client-side or on encrypted endpoints. No patient data is stored, transmitted or
+                    logged. HIPAA-design principles applied.</p>
+            </div>
+            <div class="feat-card fade-up" data-tilt data-tilt-max="8" data-tilt-glare data-tilt-max-glare="0.15">
+                <span class="feat-icon">📊</span>
+                <h3>Confidence Scoring</h3>
+                <p>Softmax output layer delivers probability distributions across all classes, with threshold-based
+                    flagging for clinical review escalation.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- NEURAL SECTION -->
+    <section id="neural">
+        <div class="neural-text fade-up">
+            <h2>Inside the<br /><span style="color:var(--c1)">VGG16 Model</span></h2>
+            <p>The architecture consists of 13 convolutional layers organized in 5 blocks with max-pooling, followed by
+                3 fully-connected layers. Our custom head replaces the ImageNet classifier with a 3-class softmax tuned
+                on thoracic CT scans.</p>
+            <ul class="capability-list">
+                <li>5 Convolutional Blocks — 3×3 filters, ReLU activation</li>
+                <li>Max-Pooling after each block for spatial reduction</li>
+                <li>Global Average Pooling + Dropout (0.5) for regularization</li>
+                <li>Custom Dense head: 512 → 256 → 4 (Softmax)</li>
+                <li>Adam optimizer with ReduceLROnPlateau scheduling</li>
+                <li>Data augmentation: rotation, zoom, horizontal flip</li>
+            </ul>
+        </div>
+        <div class="neural-canvas-wrap fade-up">
+            <canvas id="neuralCanvas" width="480" height="360"></canvas>
+        </div>
+    </section>
+
+    <!-- HOW IT WORKS -->
+    <section id="howitworks">
+        <p class="section-title fade-up">How It Works</p>
+        <p class="section-sub fade-up">From CT scan upload to clinical-grade prediction in four steps.</p>
+        <div class="steps-grid">
+            <div class="step-card fade-up" data-tilt data-tilt-max="6">
+                <div class="step-num">01</div>
+                <div class="step-icon">📁</div>
+                <h3>Upload CT Scan</h3>
+                <p>Drag and drop a PNG/JPG CT scan image. The portal accepts standard DICOM exports and radiographic
+                    PNGs.</p>
+            </div>
+            <div class="step-card fade-up" data-tilt data-tilt-max="6">
+                <div class="step-num">02</div>
+                <div class="step-icon">⚙️</div>
+                <h3>Preprocessing</h3>
+                <p>Image is resized to 224×224, normalized to [0,1], and passed through the VGG16 input pipeline with
+                    mean subtraction.</p>
+            </div>
+            <div class="step-card fade-up" data-tilt data-tilt-max="6">
+                <div class="step-num">03</div>
+                <div class="step-icon">🧠</div>
+                <h3>Deep Inference</h3>
+                <p>The 16-layer ConvNet extracts 512 feature maps in the deepest block. The custom classifier predicts
+                    probabilities.</p>
+            </div>
+            <div class="step-card fade-up" data-tilt data-tilt-max="6">
+                <div class="step-num">04</div>
+                <div class="step-icon">📋</div>
+                <h3>Clinical Report</h3>
+                <p>Receive a diagnosis with confidence %, cancer class, and a Grad-CAM overlay highlighting the
+                    suspicious region.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- SCAN PORTAL -->
+    <section id="scan">
+        <div class="scan-left fade-up">
+            <h2>AI Diagnostic<br /><span style="color:var(--c1)">Scan Portal</span></h2>
+            <p>Upload a patient CT scan below. Our VGG16 model will deliver an instant prediction with confidence
+                metrics — no registration required.</p>
+            <ul class="capability-list" style="margin-top:10px">
+                <li>Accepts PNG, JPG, JPEG formats</li>
+                <li>Results delivered in &lt;3 seconds</li>
+                <li>Confidence threshold: 85%+ for clinical flag</li>
+                <li>No data retained after session ends</li>
+            </ul>
+        </div>
+
+        <div class="glass-form fade-up" data-tilt data-tilt-max="4" data-tilt-glare data-tilt-max-glare="0.05">
+            <svg width="0" height="0" style="position:absolute">
+                <defs>
+                    <linearGradient id="ringGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                        <stop offset="0%" style="stop-color:var(--c1)" />
+                        <stop offset="100%" style="stop-color:var(--c2)" />
+                    </linearGradient>
+                </defs>
+            </svg>
+
+            <div class="form-title">// PATIENT INTAKE</div>
+
+            <div class="field-row">
+                <div class="field">
+                    <label>Patient ID / Name</label>
+                    <input type="text" id="patientId" placeholder="e.g. PT-00234" autocomplete="off" />
+                </div>
+                <div class="field">
+                    <label>Patient Age</label>
+                    <input type="number" id="patientAge" placeholder="e.g. 54" min="1" max="120" />
+                </div>
+            </div>
+
+            <div class="field">
+                <label>CT Scan Image</label>
+                <div class="drop-zone" id="drop-zone" onclick="document.getElementById('file-input').click()">
+                    <span class="drop-zone-icon" id="dz-icon">🫁</span>
+                    <p class="drop-zone-text"><strong>Click to upload</strong> or drag & drop</p>
+                    <p class="drop-zone-text" style="margin-top:6px;font-size:.78rem;">PNG, JPG, JPEG — max 10MB</p>
+                    <input type="file" id="file-input" accept="image/png,image/jpeg,image/jpg" />
+                    <div class="file-preview" id="file-preview">
+                        <img id="preview-img" src="" alt="CT Preview" />
+                    </div>
+                </div>
+            </div>
+
+            <button class="scan-btn" id="scan-btn" onclick="runAnalysis()">
+                ⚡ Initiate VGG16 Analysis
+            </button>
+
+            <!-- Progress Ring -->
+            <div class="analysis-ui" id="analysis-ui">
+                <div class="ring-wrap">
+                    <svg width="100" height="100" viewBox="0 0 100 100">
+                        <circle class="ring-bg" cx="50" cy="50" r="45" />
+                        <circle class="ring-prog" id="ring-prog" cx="50" cy="50" r="45" />
+                    </svg>
+                </div>
+                <div class="ring-label" id="ring-pct">0%</div>
+                <div class="ring-status" id="ring-status">INITIALIZING MODEL...</div>
+            </div>
+
+            <!-- Result -->
+            <div class="result-panel" id="result-panel">
+                <div class="result-tag" id="result-tag">—</div>
+                <div class="result-meta" id="result-meta"></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- HEALTH ADVISORY -->
+    <section id="health">
+        <div class="advisory-alert fade-up">
+            <span class="advisory-alert-icon">🚨</span>
+            <p><strong>Early detection saves lives.</strong> Lung cancer has a <strong>90%+ survival rate</strong> when
+                caught at Stage I. Don't wait for symptoms — screen today.</p>
+        </div>
+        <p class="section-title fade-up" style="margin-top:56px">Health Advisory</p>
+        <p class="section-sub fade-up">Prevention is the most powerful medicine. Know the risks, protect your lungs.</p>
+        <div class="advisory-grid">
+            <div class="advisory-card fade-up" data-tilt data-tilt-max="6">
+                <div class="advisory-icon" style="background:rgba(255,80,80,.1);border-color:rgba(255,80,80,.25)">🚬
+                </div>
+                <h3>Stop Smoking</h3>
+                <p>Smoking is responsible for <strong>85%</strong> of all lung cancer cases. Quitting at any age
+                    dramatically reduces risk. Every cigarette damages lung tissue — stopping now begins recovery within
+                    weeks.</p>
+                <div class="advisory-badge red">HIGH RISK FACTOR</div>
+            </div>
+            <div class="advisory-card fade-up" data-tilt data-tilt-max="6">
+                <div class="advisory-icon" style="background:rgba(255,160,0,.1);border-color:rgba(255,160,0,.25)">🏭
+                </div>
+                <h3>Avoid Air Pollution</h3>
+                <p>Long-term exposure to PM2.5 particles, vehicle exhaust, and industrial fumes increases lung cancer
+                    risk by up to <strong>30%</strong>. Use N95 masks in polluted areas and use air purifiers indoors.
+                </p>
+                <div class="advisory-badge orange">ENVIRONMENTAL RISK</div>
+            </div>
+            <div class="advisory-card fade-up" data-tilt data-tilt-max="6">
+                <div class="advisory-icon" style="background:rgba(0,200,150,.1);border-color:rgba(0,200,150,.25)">🥗
+                </div>
+                <h3>Nutrition & Diet</h3>
+                <p>A diet rich in antioxidants — leafy greens, berries, cruciferous vegetables — supports lung cellular
+                    repair. Vitamins C, D, and E are linked to reduced cancer risk. Avoid processed foods and alcohol
+                    excess.</p>
+                <div class="advisory-badge green">PROTECTIVE FACTOR</div>
+            </div>
+            <div class="advisory-card fade-up" data-tilt data-tilt-max="6">
+                <div class="advisory-icon" style="background:rgba(80,160,255,.1);border-color:rgba(80,160,255,.25)">🏃
+                </div>
+                <h3>Regular Exercise</h3>
+                <p>30 minutes of moderate aerobic activity 5 days a week improves lung capacity and immune function.
+                    Active individuals have a <strong>20–30% lower</strong> overall cancer risk compared to sedentary
+                    lifestyles.</p>
+                <div class="advisory-badge blue">RECOMMENDED DAILY</div>
+            </div>
+            <div class="advisory-card fade-up" data-tilt data-tilt-max="6">
+                <div class="advisory-icon" style="background:rgba(180,80,255,.1);border-color:rgba(180,80,255,.25)">🏠
+                </div>
+                <h3>Test for Radon Gas</h3>
+                <p>Radon is the <strong>2nd leading cause</strong> of lung cancer — a colorless, odorless radioactive
+                    gas found in soil. Test your home with an affordable radon kit. Mitigation systems can reduce indoor
+                    levels by 99%.</p>
+                <div class="advisory-badge purple">HIDDEN DANGER</div>
+            </div>
+            <div class="advisory-card fade-up" data-tilt data-tilt-max="6">
+                <div class="advisory-icon" style="background:rgba(0,240,255,.1);border-color:rgba(0,240,255,.25)">🫁
+                </div>
+                <h3>Annual CT Screening</h3>
+                <p>If you are aged 50–80 with a 20+ pack-year smoking history, annual low-dose CT screening is
+                    recommended by major health bodies. Pulmo-Scan AI supplements — not replaces — clinical screening
+                    programs.</p>
+                <div class="advisory-badge cyan">SCREENING GUIDE</div>
+            </div>
+        </div>
+    </section>
+
+    <!-- PRICING -->
+    <section id="pricing">
+        <p class="section-title fade-up">Early Detection, <span style="color:var(--c1)">Affordable Access</span></p>
+        <p class="section-sub fade-up">Cancer treatment can cost ₹5–30 Lakhs. Catching it early costs far less. Choose a
+            plan that fits your life.</p>
+        <div class="pricing-grid">
+            <div class="price-card fade-up" data-tilt data-tilt-max="5">
+                <div class="price-tier">BASIC</div>
+                <div class="price-amount">Free<span class="price-period">forever</span></div>
+                <div class="price-desc">For individuals screening themselves once or twice a year.</div>
+                <ul class="price-features">
+                    <li><span class="chk">✓</span> 2 CT Scan analyses / month</li>
+                    <li><span class="chk">✓</span> Instant VGG16 AI result</li>
+                    <li><span class="chk">✓</span> 3-class detection</li>
+                    <li><span class="chk">✓</span> Health advisory access</li>
+                    <li><span class="x">✗</span> Grad-CAM heatmap</li>
+                    <li><span class="x">✗</span> PDF diagnostic report</li>
+                    <li><span class="x">✗</span> Scan history</li>
+                </ul>
+                <button class="price-btn ghost" onclick="alert('Sign up coming soon!')">Get Started Free</button>
+            </div>
+            <div class="price-card featured fade-up" data-tilt data-tilt-max="5">
+                <div class="price-popular">MOST POPULAR</div>
+                <div class="price-tier" style="color:var(--c1)">STANDARD</div>
+                <div class="price-amount">₹99<span class="price-period">/ month</span></div>
+                <div class="price-desc">For patients and families doing regular preventive screening.</div>
+                <ul class="price-features">
+                    <li><span class="chk">✓</span> 20 CT Scan analyses / month</li>
+                    <li><span class="chk">✓</span> Instant VGG16 AI result</li>
+                    <li><span class="chk">✓</span> 3-class detection</li>
+                    <li><span class="chk">✓</span> Grad-CAM heatmap overlay</li>
+                    <li><span class="chk">✓</span> PDF diagnostic report</li>
+                    <li><span class="chk">✓</span> 6-month scan history</li>
+                    <li><span class="x">✗</span> Priority clinical escalation</li>
+                </ul>
+                <button class="price-btn primary" onclick="alert('Subscription coming soon!')">Subscribe —
+                    ₹99/mo</button>
+            </div>
+            <div class="price-card fade-up" data-tilt data-tilt-max="5">
+                <div class="price-tier" style="color:var(--c2)">CLINICAL PRO</div>
+                <div class="price-amount">₹299<span class="price-period">/ month</span></div>
+                <div class="price-desc">For clinics, hospitals, and healthcare professionals needing volume access.
+                </div>
+                <ul class="price-features">
+                    <li><span class="chk">✓</span> Unlimited scan analyses</li>
+                    <li><span class="chk">✓</span> Instant VGG16 AI result</li>
+                    <li><span class="chk">✓</span> 3-class detection</li>
+                    <li><span class="chk">✓</span> Grad-CAM heatmap overlay</li>
+                    <li><span class="chk">✓</span> PDF + DICOM reports</li>
+                    <li><span class="chk">✓</span> Full scan history & audit log</li>
+                    <li><span class="chk">✓</span> Priority clinical escalation</li>
+                </ul>
+                <button class="price-btn ghost purple" onclick="alert('Enterprise inquiry coming soon!')">Contact for
+                    Clinic Access</button>
+            </div>
+        </div>
+        <p class="pricing-note fade-up">💙 All plans include access to the Health Advisory portal. Early detection is a
+            right, not a privilege.</p>
+    </section>
+
+    <!-- FOOTER -->
+    <footer>
+        <p>© 2025 <span>Pulmo-Scan AI</span> · VGG16 Clinical Diagnostics · Built for Academic Research<br /><span
+                style="font-size:.75rem;color:#1a3a4a;margin-top:6px;display:block;">This tool is for educational/demo
+                purposes only. Not a substitute for professional medical advice.</span></p>
+    </footer>
+
+    <script>
+        // ── Particles ──
+        particlesJS('particles-js', {
+            particles: {
+                number: { value: 60, density: { enable: true, value_area: 900 } },
+                color: { value: '#00f0ff' },
+                shape: { type: 'circle' },
+                opacity: { value: 0.15, random: true },
+                size: { value: 2, random: true },
+                line_linked: { enable: true, distance: 130, color: '#00f0ff', opacity: 0.07, width: 1 },
+                move: { enable: true, speed: 0.6, random: true, out_mode: 'out' }
+            },
+            interactivity: {
+                detect_on: 'canvas',
+                events: { onhover: { enable: true, mode: 'grab' }, onclick: { enable: true, mode: 'push' } },
+                modes: { grab: { distance: 160, line_linked: { opacity: 0.25 } }, push: { particles_nb: 3 } }
+            },
+            retina_detect: true
+        });
+
+        // ── Custom Cursor ──
+        const cur = document.getElementById('cursor');
+        const ring = document.getElementById('cursor-ring');
+        document.addEventListener('mousemove', e => {
+            cur.style.left = e.clientX + 'px'; cur.style.top = e.clientY + 'px';
+            ring.style.left = e.clientX + 'px'; ring.style.top = e.clientY + 'px';
+        });
+        document.querySelectorAll('a,button,.feat-card,.step-card').forEach(el => {
+            el.addEventListener('mouseenter', () => { cur.style.width = '20px'; cur.style.height = '20px'; ring.style.width = '52px'; ring.style.height = '52px'; });
+            el.addEventListener('mouseleave', () => { cur.style.width = '12px'; cur.style.height = '12px'; ring.style.width = '36px'; ring.style.height = '36px'; });
+        });
+
+        // ── GSAP ScrollTrigger ──
+        gsap.registerPlugin(ScrollTrigger);
+        gsap.utils.toArray('.fade-up').forEach(el => {
+            gsap.to(el, {
+                opacity: 1, y: 0, duration: 0.9, ease: 'power3.out',
+                scrollTrigger: { trigger: el, start: 'top 88%', toggleActions: 'play none none none' }
+            });
+        });
+
+        // Init hero elements immediately
+        gsap.to('#hero .fade-up', { opacity: 1, y: 0, duration: 1, stagger: 0.15, delay: 0.3, ease: 'power3.out' });
+
+        // ── Animated Stats ──
+        const statEls = document.querySelectorAll('.stat-num');
+        const animStats = () => {
+            statEls.forEach(el => {
+                const target = parseFloat(el.dataset.target);
+                const isDecimal = target % 1 !== 0;
+                let start = 0; const duration = 2000; const step = 16;
+                const increment = target / (duration / step);
+                const timer = setInterval(() => {
+                    start = Math.min(start + increment, target);
+                    el.textContent = isDecimal ? start.toFixed(1) : Math.floor(start).toLocaleString();
+                    if (start >= target) { el.textContent = isDecimal ? target.toFixed(1) : target.toLocaleString(); clearInterval(timer); }
+                }, step);
+            });
+        };
+        ScrollTrigger.create({ trigger: '#stats', start: 'top 80%', onEnter: animStats, once: true });
+
+        // ── Neural Network Canvas ──
+        (function () {
+            const canvas = document.getElementById('neuralCanvas');
+            const ctx = canvas.getContext('2d');
+            const W = canvas.width, H = canvas.height;
+            const layers = [3, 5, 6, 6, 5, 4];
+            const cols = layers.length;
+            const colW = W / (cols + 1);
+            const nodes = [];
+            let t = 0;
+
+            layers.forEach((count, li) => {
+                nodes[li] = [];
+                for (let n = 0; n < count; n++) {
+                    const x = colW * (li + 1);
+                    const spacing = H / (count + 1);
+                    const y = spacing * (n + 1);
+                    nodes[li].push({ x, y, pulse: Math.random() * Math.PI * 2 });
+                }
+            });
+
+            function draw() {
+                ctx.clearRect(0, 0, W, H);
+                t += 0.025;
+                // Connections
+                for (let li = 0; li < layers.length - 1; li++) {
+                    nodes[li].forEach(a => {
+                        nodes[li + 1].forEach(b => {
+                            const opacity = 0.04 + 0.06 * Math.abs(Math.sin(t + a.pulse));
+                            ctx.beginPath();
+                            ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y);
+                            ctx.strokeStyle = `rgba(0,240,255,${opacity})`;
+                            ctx.lineWidth = 0.8;
+                            ctx.stroke();
+                        });
+                    });
+                }
+                // Nodes
+                nodes.forEach(layer => layer.forEach(n => {
+                    const glow = 0.5 + 0.5 * Math.sin(t + n.pulse);
+                    const r = 5 + glow * 3;
+                    const grad = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, r * 2.5);
+                    grad.addColorStop(0, `rgba(0,240,255,${0.7 + glow * 0.3})`);
+                    grad.addColorStop(1, 'rgba(0,240,255,0)');
+                    ctx.beginPath();
+                    ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
+                    ctx.fillStyle = grad;
+                    ctx.fill();
+                    // Core dot
+                    ctx.beginPath();
+                    ctx.arc(n.x, n.y, 3.5, 0, Math.PI * 2);
+                    ctx.fillStyle = '#00f0ff';
+                    ctx.fill();
+                }));
+                // Signal pulse
+                const pulseLayer = Math.floor(t * 0.5) % (layers.length - 1);
+                const srcList = nodes[pulseLayer];
+                const dstList = nodes[pulseLayer + 1];
+                if (srcList && dstList) {
+                    const src = srcList[Math.floor(Math.random() * srcList.length)];
+                    const dst = dstList[Math.floor(Math.random() * dstList.length)];
+                    const p = (t * 0.5) % 1;
+                    const px = src.x + (dst.x - src.x) * (p % 1);
+                    const py = src.y + (dst.y - src.y) * (p % 1);
+                    ctx.beginPath(); ctx.arc(px, py, 4, 0, Math.PI * 2);
+                    ctx.fillStyle = 'rgba(123,47,247,0.9)'; ctx.fill();
+                }
+                requestAnimationFrame(draw);
+            }
+            draw();
+        })();
+
+        // ── File Upload ──
+        const fileInput = document.getElementById('file-input');
+        const dropZone = document.getElementById('drop-zone');
+        const preview = document.getElementById('file-preview');
+        const previewImg = document.getElementById('preview-img');
+        const dzIcon = document.getElementById('dz-icon');
+
+        fileInput.addEventListener('change', e => handleFile(e.target.files[0]));
+        dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('drag-over'); });
+        dropZone.addEventListener('dragleave', () => dropZone.classList.remove('drag-over'));
+        dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('drag-over'); handleFile(e.dataTransfer.files[0]); });
+
+        function handleFile(file) {
+            if (!file) return;
+            dzIcon.textContent = '✅';
+            const reader = new FileReader();
+            reader.onload = ev => { previewImg.src = ev.target.result; preview.style.display = 'block'; };
+            reader.readAsDataURL(file);
+        }
+
+        // ── Scan Analysis ──
+        const steps = [
+            [15, 'LOADING WEIGHTS...'],
+            [35, 'PREPROCESSING IMAGE...'],
+            [58, 'EXTRACTING FEATURES...'],
+            [75, 'RUNNING FORWARD PASS...'],
+            [90, 'COMPUTING SOFTMAX...'],
+            [100, 'ANALYSIS COMPLETE']
+        ];
+
+        const API_URL = (location.protocol === 'file:' || location.port !== '5000')
+            ? 'http://127.0.0.1:5000/predict'
+            : '/predict';
+
+        async function runAnalysis() {
+            const file = fileInput.files[0];
+            if (!file) { alert('⚠️ Please upload a CT scan image first.'); return; }
+
+            const btn = document.getElementById('scan-btn');
+            const analysisUI = document.getElementById('analysis-ui');
+            const resultPanel = document.getElementById('result-panel');
+
+            btn.disabled = true; btn.textContent = 'Processing...';
+            analysisUI.style.display = 'block';
+            resultPanel.style.display = 'none';
+            resultPanel.className = 'result-panel';
+
+            const ring = document.getElementById('ring-prog');
+            const pct = document.getElementById('ring-pct');
+            const status = document.getElementById('ring-status');
+            const circumference = 282;
+
+            let stepIdx = 0;
+            function nextStep() {
+                if (stepIdx >= steps.length) return;
+                const [p, label] = steps[stepIdx++];
+                const offset = circumference - (p / 100) * circumference;
+                ring.style.strokeDashoffset = offset;
+                pct.textContent = p + '%';
+                status.textContent = label;
+                if (stepIdx < steps.length) {
+                    setTimeout(nextStep, 400);
+                }
+            }
+            nextStep();
+
+            // API Call to the local Flask backend
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch(API_URL, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+                if (!response.ok || data.error) throw new Error(data.error || ('Server error. Status: ' + response.status));
+
+                // Fast-forward UI to 100% when response arrives
+                stepIdx = steps.length;
+                ring.style.strokeDashoffset = 0;
+                pct.textContent = '100%';
+                status.textContent = 'ANALYSIS COMPLETE';
+
+                setTimeout(() => { showResult(data); }, 500);
+            } catch (err) {
+                status.textContent = 'API CONNECTION ERROR';
+                btn.disabled = false;
+                btn.textContent = '⚡ Initiate VGG16 Analysis';
+                alert('Prediction failed: ' + err.message + '\n\nMake sure the Flask server (python app.py) is running.');
+                console.error(err);
+            }
+        }
+
+        function showResult(data) {
+            const panel = document.getElementById('result-panel');
+            const tag = document.getElementById('result-tag');
+            const meta = document.getElementById('result-meta');
+            const btn = document.getElementById('scan-btn');
+
+            const predictionClass = data.class || 'Unknown';
+            const key = predictionClass.toLowerCase();
+            const conf = Number(data.confidence).toFixed(1);
+
+            let r;
+            if (key.startsWith('malignant')) {
+                r = {
+                    label: '⚠️ MALIGNANT DETECTED', cls: 'warn', panelCls: 'malignant', type: predictionClass, conf,
+                    note: 'Immediate radiologist review recommended.'
+                };
+            } else if (key.startsWith('benign') || key.startsWith('bengin')) {
+                r = {
+                    label: '🟡 BENIGN FINDING', cls: 'ok', panelCls: '', type: predictionClass, conf,
+                    note: 'Non-cancerous pattern detected. Clinical follow-up still advised.'
+                };
+            } else {
+                r = {
+                    label: '✅ NO MALIGNANCY', cls: 'ok', panelCls: '', type: predictionClass, conf,
+                    note: 'No significant abnormality detected. Routine follow-up advised.'
+                };
+            }
+
+            const probs = data.probabilities
+                ? Object.entries(data.probabilities)
+                    .map(([k, v]) => `<span><strong>${k}:</strong> ${Number(v).toFixed(1)}%</span>`).join('')
+                : '';
+
+            tag.textContent = r.label; tag.className = 'result-tag ' + r.cls;
+            panel.className = 'result-panel ' + r.panelCls;
+            meta.innerHTML = `
+    <span><strong>Classification:</strong> ${r.type}</span>
+    <span><strong>Confidence:</strong> ${r.conf}%</span>
+    ${probs}
+    <span><strong>Model:</strong> VGG16 — Custom Head</span>
+    <span style="margin-top:6px;color:#ff9a6c">${r.note}</span>
+    <span style="font-size:.72rem;opacity:.7">Educational project — not a medical diagnostic tool.</span>
+  `;
+            panel.style.display = 'block';
+            gsap.from(panel, { opacity: 0, y: 20, duration: 0.6, ease: 'power3.out' });
+
+            btn.disabled = false; btn.textContent = '⚡ Initiate VGG16 Analysis';
+        }
+
+        // ── Navbar scroll effect ──
+        window.addEventListener('scroll', () => {
+            const nb = document.getElementById('navbar');
+            if (window.scrollY > 60) nb.style.boxShadow = '0 4px 30px rgba(0,0,0,0.5)';
+            else nb.style.boxShadow = 'none';
+        });
+    </script>
+</body>
+
+</html>

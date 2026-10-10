@@ -1,0 +1,11 @@
+
+# Trained model files
+*.keras
+*.h5
+
+# Python cache
+__pycache__/
+*.pyc
+
+# Jupyter checkpoint files
+.ipynb_checkpoints/
