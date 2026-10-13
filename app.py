@@ -33,7 +33,6 @@ app = Flask(__name__)
 app.config["MAX_CONTENT_LENGTH"] = MAX_UPLOAD_BYTES
 CORS(app)  # lets the page work even if lung.html is opened straight from disk
 
-
 # ----------------------------------------------------------------------------
 # Model loading
 # ----------------------------------------------------------------------------
@@ -52,7 +51,6 @@ def build_model() -> tf.keras.Model:
         layers.Dense(len(CLASS_NAMES), activation="softmax"),
     ])
 
-
 def load_trained_model() -> tf.keras.Model:
     if not MODEL_PATH.exists():
         raise FileNotFoundError(
@@ -70,7 +68,6 @@ def load_trained_model() -> tf.keras.Model:
     model.load_weights(MODEL_PATH)
     return model
 
-
 print("Loading model (this can take a minute)...")
 model = load_trained_model()
 
@@ -83,7 +80,6 @@ if model.output_shape[-1] != len(CLASS_NAMES):
 model.predict(np.zeros((1, IMAGE_SIZE[0], IMAGE_SIZE[1], 3), dtype=np.float32), verbose=0)
 print("Model ready. Classes:", CLASS_NAMES)
 
-
 # ----------------------------------------------------------------------------
 # Helpers
 # ----------------------------------------------------------------------------
@@ -94,7 +90,6 @@ def preprocess(file_bytes: bytes) -> np.ndarray:
     arr = np.asarray(img, dtype=np.float32)
     arr = tf.image.resize(arr, IMAGE_SIZE).numpy()  # bilinear, like image_dataset_from_directory
     return np.expand_dims(arr, axis=0)
-
 
 # ----------------------------------------------------------------------------
 # Routes
@@ -130,11 +125,11 @@ def predict():
         "probabilities": {n: round(float(p) * 100, 2) for n, p in zip(CLASS_NAMES, probs)},
     })
 
-
 @app.errorhandler(413)
 def too_large(_):
     return jsonify(error="Image is larger than 10 MB."), 413
 
-
 if __name__ == "__main__":
     app.run(host="127.0.0.1", port=5000, debug=False)
+
+
